@@ -1,6 +1,15 @@
-# PyTumblr
+This is a fork of [tumblr/pytumblr](https://github.com/tumblr/pytumblr).
+I wanted to integrate pytumblr in a Python 3 project but the original
+pytumblr is Python 2 only. Moreover, the original repo seems abandoned.
+So I decided to convert the project to Python 3. I only needed one
+functionality, namely `create_photo`. With this version you can upload
+photos to Tumblr using Python 3.
 
-[![Build Status](https://travis-ci.org/tumblr/pytumblr.png?branch=master)](https://travis-ci.org/tumblr/pytumblr)
+-- Jabba Laci, 2016 --
+
+-------------------------------------------------------
+
+# PyTumblr
 
 ## Create a client
 
@@ -57,7 +66,7 @@ client.submission('codingjester') # get the submissions for a given blog
 #### Creating posts
 
 PyTumblr lets you create all of the various types that Tumblr supports. When using
-these types there are a few defaults that are able to be used with any post type. 
+these types there are a few defaults that are able to be used with any post type.
 
 The default supported types are described below.
 
@@ -111,8 +120,8 @@ client.create_quote("codingjester", state="queue", quote="I am the Walrus", sour
 ```
 
 ##### Creating a link post
-* **title**       - a string, the title of post that you want. Supports HTML entities. 
-* **url**         - a string, the url that you want to create a link post for. 
+* **title**       - a string, the title of post that you want. Supports HTML entities.
+* **url**         - a string, the url that you want to create a link post for.
 * **description** - a string, the desciption of the link that you have
 
 ```python

@@ -1,11 +1,22 @@
-import urllib
-import urllib2
-import time
 import json
+import random
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from urllib.parse import parse_qsl
 
-from urlparse import parse_qsl
 import oauth2 as oauth
 from httplib2 import RedirectLimit
+
+UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+LOWERCASE = 'abcdefghijklmnopqrstuvwxyz'
+DIGITS = '0123456789'
+
+
+def get_random_string(length):
+    return ''.join(random.choice(UPPERCASE + LOWERCASE + DIGITS) for _ in range(length))
+
 
 class TumblrRequest(object):
     """
@@ -33,13 +44,13 @@ class TumblrRequest(object):
         """
         url = self.host + url
         if params:
-            url = url + "?" + urllib.urlencode(params)
+            url = url + "?" + urllib.parse.urlencode(params)
 
         client = oauth.Client(self.consumer, self.token)
         try:
             client.follow_redirects = False
             resp, content = client.request(url, method="GET", redirections=False, headers=self.headers)
-        except RedirectLimit, e:
+        except RedirectLimit as e:
             resp, content = e.args
 
         return self.json_parse(content)
@@ -61,25 +72,25 @@ class TumblrRequest(object):
                 return self.post_multipart(url, params, files)
             else:
                 client = oauth.Client(self.consumer, self.token)
-                resp, content = client.request(url, method="POST", body=urllib.urlencode(params), headers=self.headers)
+                resp, content = client.request(url, method="POST", body=urllib.parse.urlencode(params), headers=self.headers)
                 return self.json_parse(content)
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
             return self.json_parse(e.read())
 
     def json_parse(self, content):
         """
         Wraps and abstracts content validation and JSON parsing
         to make sure the user gets the correct response.
-        
+
         :param content: The content returned from the web request to be parsed as json
-        
+
         :returns: a dict of the json response
         """
         try:
             data = json.loads(content)
-        except ValueError, e:
+        except ValueError as e:
             data = {'meta': { 'status': 500, 'msg': 'Server Error'}, 'response': {"error": "Malformed JSON or HTML was returned."}}
-        
+
         #We only really care about the response if we succeed
         #and the error if we fail
         if data['meta']['status'] in [200, 201, 301]:
@@ -98,7 +109,7 @@ class TumblrRequest(object):
         :returns: a dict parsed from the JSON response
         """
         #combine the parameters with the generated oauth params
-        params = dict(params.items() + self.generate_oauth_params().items())
+        params = dict(list(params.items()) + list(self.generate_oauth_params().items()))
         faux_req = oauth.Request(method="POST", url=url, parameters=params)
         faux_req.sign_request(oauth.SignatureMethod_HMAC_SHA1(), self.consumer, self.token)
         params = dict(parse_qsl(faux_req.to_postdata()))
@@ -107,9 +118,10 @@ class TumblrRequest(object):
         headers = {'Content-Type': content_type, 'Content-Length': str(len(body))}
 
         #Do a bytearray of the body and everything seems ok
-        r = urllib2.Request(url, bytearray(body), headers)
-        content = urllib2.urlopen(r).read()
+        r = urllib.request.Request(url, bytearray(body), headers)
+        content = urllib.request.urlopen(r).read().decode()
         return self.json_parse(content)
+
 
     def encode_multipart_formdata(self, fields, files):
         """
@@ -120,28 +132,52 @@ class TumblrRequest(object):
 
         :returns: the content for the body and the content-type value
         """
-        import mimetools
         import mimetypes
-        BOUNDARY = mimetools.choose_boundary()
+        BOUNDARY = get_random_string(32)
         CRLF = '\r\n'
-        L = []
-        for (key, value) in fields.items():
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="{0}"'.format(key))
-            L.append('')
-            L.append(value)
+        # L = []
+        L2 = bytearray("", encoding="utf8")
+        for (key, value) in list(fields.items()):
+            # L.append('--' + BOUNDARY + CRLF)
+            L2 += bytearray('--' + BOUNDARY, encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('Content-Disposition: form-data; name="%s"' % key + CRLF)
+            L2 += bytearray('Content-Disposition: form-data; name="%s"' % key, encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('' + CRLF)
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append(value + CRLF)
+            L2 += bytearray(value, encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
         for (key, filename, value) in files:
-            L.append('--' + BOUNDARY)
-            L.append('Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(key, filename))
-            L.append('Content-Type: {0}'.format(mimetypes.guess_type(filename)[0] or 'application/octet-stream'))
-            L.append('Content-Transfer-Encoding: binary')
-            L.append('')
-            L.append(value)
-        L.append('--' + BOUNDARY + '--')
-        L.append('')
-        body = CRLF.join(L)
-        content_type = 'multipart/form-data; boundary={0}'.format(BOUNDARY)
+            # L.append('--' + BOUNDARY + CRLF)
+            L2 += bytearray('--' + BOUNDARY, encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename) + CRLF)
+            L2 += bytearray('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename), encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('Content-Type: %s' % mimetypes.guess_type(filename)[0] or 'application/octet-stream' + CRLF)
+            L2 += bytearray('Content-Type: %s' % mimetypes.guess_type(filename)[0] or 'application/octet-stream', encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('Content-Transfer-Encoding: binary' + CRLF)
+            L2 += bytearray('Content-Transfer-Encoding: binary', encoding="utf8")
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append('' + CRLF)
+            L2 += bytearray(CRLF, encoding="utf8")
+            # L.append(value + CRLF)
+            L2 += value
+            L2 += bytearray(CRLF, encoding="utf8")
+        # L.append('--' + BOUNDARY + '--' + CRLF)
+        L2 += bytearray('--' + BOUNDARY + '--', encoding="utf8")
+        L2 += bytearray(CRLF, encoding="utf8")
+        # L.append('' + CRLF)
+        L2 += bytearray(CRLF, encoding="utf8")
+        # print(L2)
+        # body = "".join(L)
+        body = L2
+        content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
         return content_type, body
+
 
     def generate_oauth_params(self):
         """

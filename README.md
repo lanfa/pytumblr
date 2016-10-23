@@ -5,6 +5,10 @@ So I decided to convert the project to Python 3. I only needed one
 functionality, namely `create_photo`. With this version you can upload
 photos to Tumblr using Python 3.
 
+*Update:* it also works with `create_link`. If you create a link, you can
+also provide a 'thumbnail'. The original version didn't accept a
+thumbnail.
+
 -- Jabba Laci, 2016 --
 
 -------------------------------------------------------

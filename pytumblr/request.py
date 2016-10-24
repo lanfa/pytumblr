@@ -91,7 +91,7 @@ class TumblrRequest(object):
             if isinstance(content, bytes):
                 content = content.decode()
             data = json.loads(content)
-            pprint(data)
+            # pprint(data)
         except ValueError as e:
             data = {'meta': { 'status': 500, 'msg': 'Server Error'}, 'response': {"error": "Malformed JSON or HTML was returned."}}
 

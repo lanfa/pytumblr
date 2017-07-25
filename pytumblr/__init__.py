@@ -421,7 +421,7 @@ class TumblrRestClient(object):
         """
         url = "/v2/blog/{0}/post/reblog".format(blogname)
 
-        valid_options = ['id', 'reblog_key', 'comment'] + self._post_valid_options(kwargs.get('type', None))
+        valid_options = ['id', 'reblog_key', 'comment','attach_reblog_tree'] + self._post_valid_options(kwargs.get('type', None))
         if 'tags' in kwargs and kwargs['tags']:
             # Take a list of tags and make them acceptable for upload
             kwargs['tags'] = ",".join(kwargs['tags'])

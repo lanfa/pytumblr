@@ -1,3 +1,6 @@
+## Install
+pip install git+https://github.com/lanfa/pytumblr.git
+
 This is a fork of [tumblr/pytumblr](https://github.com/tumblr/pytumblr).
 I wanted to integrate pytumblr in a Python 3 project but the original
 pytumblr is Python 2 only. Moreover, the original repo seems abandoned.
